@@ -1,7 +1,8 @@
-"""Processor module for computing correlation signals from input messages.
+"""
+Processor module for stock-backtest-correlation signal generation.
 
-This module validates incoming messages and computes a derived correlation signal
-based on the input data. All operations are logged for observability.
+Validates incoming messages and computes a correlation score
+between the target symbol and a reference (benchmark or peer).
 """
 
 from typing import Any
@@ -17,60 +18,46 @@ def validate_input_message(message: dict[str, Any]) -> ValidatedMessage:
     """
     Validate the incoming raw message against the expected schema.
 
-    Parameters:
+    Args:
         message (dict[str, Any]): The raw message payload.
 
     Returns:
         ValidatedMessage: A validated message object.
+
+    Raises:
+        ValueError: If the message format is invalid.
     """
     logger.debug("🔍 Validating message schema...")
     if not validate_message_schema(message):
-        logger.error("❌ Message schema invalid: %s", message)
+        logger.error("❌ Invalid message schema: %s", message)
         raise ValueError("Invalid message format")
     return message  # type: ignore[return-value]
 
 
 def compute_correlation_signal(message: ValidatedMessage) -> dict[str, Any]:
     """
-    Compute a correlation signal from the validated input message.
+    Compute a correlation score and basic signal using placeholder logic.
 
-    This function is a placeholder for actual correlation computations
-    between assets or data series.
+    Normally, this would involve historical price comparisons against
+    a benchmark like SPY or peer stocks using Pearson correlation.
 
-    Parameters:
-        message (ValidatedMessage): The validated message input.
+    Args:
+        message (ValidatedMessage): The validated input data.
 
     Returns:
-        dict[str, Any]: Dictionary with correlation-related data.
+        dict[str, Any]: The enriched message with correlation score and signal.
     """
-    logger.debug("📊 Computing correlation signal for %s", message["symbol"])
-    correlation_score = 0.85  # Placeholder logic
+    symbol = message.get("symbol", "UNKNOWN")
+    logger.info("🔗 Computing correlation signal for %s", symbol)
 
-    return {
-        "symbol": message["symbol"],
-        "timestamp": message["timestamp"],
+    # Placeholder logic — real implementation would use a rolling window
+    correlation_score = 0.76  # Simulated result from price vector comparison
+    signal = "HIGH_CORRELATION" if correlation_score > 0.7 else "LOW_CORRELATION"
+
+    result = {
         "correlation_score": correlation_score,
+        "correlation_signal": signal,
     }
 
-
-def process_message(raw_message: dict[str, Any]) -> ValidatedMessage:
-    """
-    Main entry point for processing a single message.
-
-    Parameters:
-        raw_message (dict[str, Any]): Raw input from the message queue.
-
-    Returns:
-        ValidatedMessage: Enriched and validated message ready for output.
-    """
-    logger.info("🚦 Processing new message...")
-    validated = validate_input_message(raw_message)
-    correlation_data = compute_correlation_signal(validated)
-
-    enriched: ValidatedMessage = {
-        "symbol": validated["symbol"],
-        "timestamp": validated["timestamp"],
-        "data": {**validated["data"], **correlation_data},
-    }
-    logger.debug("✅ Final enriched message: %s", enriched)
-    return enriched
+    logger.debug("📈 Correlation result for %s: %s", symbol, result)
+    return {**message, **result}
